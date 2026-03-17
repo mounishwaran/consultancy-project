@@ -133,6 +133,20 @@ const AdminDashboard = () => {
                 Add Product
               </button>
               <Link
+                to="/admin/orders"
+                className="btn-secondary flex items-center justify-center gap-2 text-center"
+              >
+                <Package size={16} />
+                Manage Orders
+              </Link>
+              <Link
+                to="/admin/users"
+                className="btn-secondary flex items-center justify-center gap-2 text-center"
+              >
+                <Users size={16} />
+                Manage Users
+              </Link>
+              <Link
                 to="/admin/reports"
                 className="btn-secondary flex items-center justify-center gap-2 text-center"
               >
@@ -154,6 +168,111 @@ const AdminDashboard = () => {
             </Link>
           </div>
         </div>
+
+        {/* Recent Orders */}
+        {stats && stats.recentOrders && stats.recentOrders.length > 0 && (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Recent Orders</h2>
+              <Link
+                to="/admin/orders"
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              >
+                View All Orders
+              </Link>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-sm font-semibold">Order ID</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold">Customer</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold">Date</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold">Total</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {stats.recentOrders.map((order) => (
+                    <tr key={order._id} className="hover:bg-gray-50">
+                      <td className="px-4 py-2 font-mono text-sm">
+                        {order._id.slice(-8)}
+                      </td>
+                      <td className="px-4 py-2">{order.user?.name}</td>
+                      <td className="px-4 py-2">
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-2 font-medium">
+                        ₹{order.totalPrice?.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          order.orderStatus === 'delivered' ? 'bg-green-100 text-green-800' :
+                          order.orderStatus === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                          order.orderStatus === 'processing' ? 'bg-yellow-100 text-yellow-800' :
+                          order.orderStatus === 'cancelled' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {order.orderStatus}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Top Selling Products */}
+        {stats && stats.topProducts && stats.topProducts.length > 0 && (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 className="text-xl font-bold mb-4">Top Selling Products</h2>
+            <div className="space-y-3">
+              {stats.topProducts.map((product, index) => (
+                <div key={product._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-bold text-gray-500">#{index + 1}</span>
+                    <div>
+                      <p className="font-medium">{product.name}</p>
+                      <p className="text-sm text-gray-500">{product.totalSold} units sold</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Low Stock Products */}
+        {stats && stats.lowStockProducts && stats.lowStockProducts.length > 0 && (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-yellow-800">Low Stock Alert</h2>
+              <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">
+                {stats.lowStockProducts.length} items
+              </span>
+            </div>
+            <div className="space-y-3">
+              {stats.lowStockProducts.map((product) => (
+                <div key={product._id} className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                  <div>
+                    <p className="font-medium">{product.name}</p>
+                    <p className="text-sm text-gray-500">
+                      {product.sizeStock && product.sizeStock.length > 0 
+                        ? `${product.sizeStock.filter(s => s.stock > 0).length} sizes available`
+                        : `${product.stock} units left`
+                      }
+                    </p>
+                  </div>
+                  <span className="bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">
+                    Low Stock
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Products Section */}
         <div className="bg-white rounded-lg shadow-md p-6">

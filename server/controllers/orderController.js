@@ -3,6 +3,7 @@ import Cart from '../models/Cart.js';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
 import { saveBillToFile } from '../utils/billGenerator.js';
+import generateInvoice from '../utils/invoiceGenerator.js';
 
 export const createOrder = async (req, res) => {
   try {
@@ -12,6 +13,27 @@ export const createOrder = async (req, res) => {
 
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({ message: 'Cart is empty' });
+    }
+
+    // Check stock availability before creating order
+    for (const item of cart.items) {
+      if (!item.product) {
+        return res.status(400).json({ message: `Product not found for item ${item.product}` });
+      }
+
+      // Check stock based on size-wise or regular stock
+      if (item.product.sizeStock && item.product.sizeStock.length > 0 && item.size) {
+        const sizeEntry = item.product.sizeStock.find(s => s.size === item.size);
+        if (!sizeEntry || sizeEntry.stock < item.quantity) {
+          return res.status(400).json({ 
+            message: `Insufficient stock for ${item.product.name} in size ${item.size}. Available: ${sizeEntry?.stock || 0}` 
+          });
+        }
+      } else if (item.product.stock < item.quantity) {
+        return res.status(400).json({ 
+          message: `Insufficient stock for ${item.product.name}. Available: ${item.product.stock}` 
+        });
+      }
     }
 
     const orderItems = cart.items.map((item) => ({
@@ -36,9 +58,14 @@ export const createOrder = async (req, res) => {
       itemsPrice,
       shippingPrice,
       totalPrice,
+      statusHistory: [{
+        status: 'pending',
+        timestamp: new Date(),
+        note: 'Order placed'
+      }]
     });
 
-    // Decrease product stock / size-wise stock
+    // Atomic stock update
     for (const item of cart.items) {
       const product = await Product.findById(item.product._id);
       if (!product) continue;
@@ -49,7 +76,6 @@ export const createOrder = async (req, res) => {
         if (entry) {
           entry.stock = Math.max(0, (entry.stock || 0) - item.quantity);
         }
-        // Recalculate total stock and inStock flag in pre-save hook
       } else if (typeof product.stock === 'number') {
         product.stock = Math.max(0, product.stock - item.quantity);
         product.inStock = product.stock > 0;

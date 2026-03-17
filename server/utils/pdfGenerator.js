@@ -27,12 +27,12 @@ export const generatePDFReport = (data, type, startDate, endDate) => {
   yPosition += 8
   
   if (data.totalAmount !== undefined) {
-    doc.text(`Total Amount: ₹${data.totalAmount}`, 20, yPosition)
+    doc.text(`Total Amount: Rs. ${data.totalAmount}`, 20, yPosition)
     yPosition += 8
   }
   
   if (data.averageOrder !== undefined) {
-    doc.text(`Average Order: ₹${data.averageOrder}`, 20, yPosition)
+    doc.text(`Average Order: Rs. ${data.averageOrder}`, 20, yPosition)
     yPosition += 8
   }
   
@@ -52,15 +52,58 @@ export const generatePDFReport = (data, type, startDate, endDate) => {
   }
   
   if (data.totalInventoryValue !== undefined) {
-    doc.text(`Total Inventory Value: ₹${data.totalInventoryValue}`, 20, yPosition)
+    doc.text(`Total Inventory Value: Rs. ${data.totalInventoryValue}`, 20, yPosition)
     yPosition += 8
   }
   
   yPosition += 10
   
-  // Add detailed data
+  // Add detailed data table for sales and orders
+  if (data.detailedData && data.detailedData.length > 0) {
+    doc.setFontSize(14)
+    doc.text('Detailed Data', 20, yPosition)
+    yPosition += 15
+    
+    // Table headers
+    doc.setFontSize(10)
+    const headers = ['Date', 'Order ID', 'Customer', 'Product', 'Quantity', 'Revenue']
+    const colWidths = [25, 30, 40, 50, 20, 25]
+    let xPos = 20
+    
+    headers.forEach((header, i) => {
+      doc.text(header, xPos, yPosition)
+      xPos += colWidths[i]
+    })
+    yPosition += 8
+    
+    // Table rows (limit to first 20 entries to fit on page)
+    data.detailedData.slice(0, 20).forEach((item) => {
+      xPos = 20
+      const rowData = [
+        item.date || '',
+        item.orderId || '',
+        item.customer ? (item.customer.length > 20 ? item.customer.substring(0, 20) + '...' : item.customer) : 'N/A',
+        item.product ? (item.product.length > 25 ? item.product.substring(0, 25) + '...' : item.product) : 'N/A',
+        (item.quantity || 0).toString(),
+        `Rs. ${item.revenue || 0}`
+      ]
+      
+      rowData.forEach((data, i) => {
+        doc.text(data, xPos, yPosition)
+        xPos += colWidths[i]
+      })
+      yPosition += 7
+    })
+    
+    if (data.detailedData.length > 20) {
+      doc.text(`... and ${data.detailedData.length - 20} more records`, 20, yPosition + 5)
+    }
+    yPosition += 15
+  }
+  
+  // Add aggregated data
   doc.setFontSize(14)
-  doc.text('Details', 20, yPosition)
+  doc.text('Aggregated Data', 20, yPosition)
   yPosition += 10
   
   doc.setFontSize(10)
@@ -70,7 +113,7 @@ export const generatePDFReport = (data, type, startDate, endDate) => {
     doc.text('Sales by Product:', 20, yPosition)
     yPosition += 8
     Object.entries(data.salesByProduct).forEach(([product, info]) => {
-      doc.text(`- ${product}: ${info.quantity} units, ₹${info.revenue}`, 25, yPosition)
+      doc.text(`- ${product}: ${info.quantity} units, Rs. ${info.revenue}`, 25, yPosition)
       yPosition += 6
     })
     yPosition += 5
@@ -125,7 +168,7 @@ export const generatePDFReport = (data, type, startDate, endDate) => {
     doc.text('Inventory by Category:', 20, yPosition)
     yPosition += 8
     Object.entries(data.inventoryByCategory).forEach(([category, info]) => {
-      doc.text(`- ${category}: ${info.totalProducts} products, ${info.totalStock} units, ₹${info.totalValue}`, 25, yPosition)
+      doc.text(`- ${category}: ${info.totalProducts} products, ${info.totalStock} units, Rs. ${info.totalValue}`, 25, yPosition)
       yPosition += 6
     })
   }
@@ -147,7 +190,7 @@ export const generatePDFReport = (data, type, startDate, endDate) => {
     data.products.slice(0, 10).forEach(product => {
       doc.text(product.name?.substring(0, 15) || '', 20, yPosition)
       doc.text(product.category?.substring(0, 10) || '', 60, yPosition)
-      doc.text(`₹${product.price || 0}`, 100, yPosition)
+      doc.text(`Rs. ${product.price || 0}`, 100, yPosition)
       doc.text(`${product.stock || 0}`, 130, yPosition)
       yPosition += 6
     })

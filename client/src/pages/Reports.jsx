@@ -19,34 +19,20 @@ import {
 const Reports = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [reports, setReports] = useState([])
-  const [loading, setLoading] = useState(true)
   const [dateRange, setDateRange] = useState({
     startDate: '',
     endDate: ''
   })
   const [reportType, setReportType] = useState('sales')
   const [generatedReport, setGeneratedReport] = useState(null)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (!user || user.role !== 'admin') {
       navigate('/admin/login')
       return
     }
-    fetchReports()
   }, [user, navigate])
-
-  const fetchReports = async () => {
-    try {
-      setLoading(true)
-      const res = await axios.get('/api/reports')
-      setReports(res.data)
-    } catch (error) {
-      console.error('Error fetching reports:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const generateReport = async () => {
     try {
@@ -65,16 +51,16 @@ const Reports = () => {
     }
   }
 
-  const downloadReport = async (reportId, format) => {
+  const downloadReport = async (format) => {
     try {
-      const res = await axios.get(`/api/reports/${reportId}/download?format=${format}&type=${reportType}&startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`, {
+      const res = await axios.get(`/api/reports/download?format=${format}&type=${reportType}&startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`, {
         responseType: 'blob'
       })
       
       const url = window.URL.createObjectURL(new Blob([res.data]))
       const link = document.createElement('a')
       link.href = url
-      link.setAttribute('download', `report-${reportId}.${format}`)
+      link.setAttribute('download', `report-${Date.now()}.${format}`)
       document.body.appendChild(link)
       link.click()
       link.remove()
@@ -98,7 +84,7 @@ const Reports = () => {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto"></div>
-        <p className="mt-4">Loading reports...</p>
+        <p className="mt-4">Generating report...</p>
       </div>
     )
   }
@@ -183,11 +169,11 @@ const Reports = () => {
             </div>
             <div className="bg-gray-50 p-4 rounded">
               <p className="text-sm text-gray-600">Total Amount</p>
-              <p className="text-2xl font-bold">₹{generatedReport.totalAmount || 0}</p>
+              <p className="text-2xl font-bold">Rs. {generatedReport.totalAmount || 0}</p>
             </div>
             <div className="bg-gray-50 p-4 rounded">
               <p className="text-sm text-gray-600">Average Order</p>
-              <p className="text-2xl font-bold">₹{generatedReport.averageOrder || 0}</p>
+              <p className="text-2xl font-bold">Rs. {generatedReport.averageOrder || 0}</p>
             </div>
             <div className="bg-gray-50 p-4 rounded">
               <p className="text-sm text-gray-600">Generated</p>
@@ -197,21 +183,21 @@ const Reports = () => {
           
           <div className="flex gap-2">
             <button
-              onClick={() => downloadReport(generatedReport.id, 'pdf')}
+              onClick={() => downloadReport('pdf')}
               className="btn-secondary flex items-center gap-2"
             >
               <Download size={16} />
               Download PDF
             </button>
             <button
-              onClick={() => downloadReport(generatedReport.id, 'excel')}
+              onClick={() => downloadReport('excel')}
               className="btn-secondary flex items-center gap-2"
             >
               <Download size={16} />
               Download Excel
             </button>
             <button
-              onClick={() => downloadReport(generatedReport.id, 'csv')}
+              onClick={() => downloadReport('csv')}
               className="btn-secondary flex items-center gap-2"
             >
               <Download size={16} />
@@ -220,76 +206,6 @@ const Reports = () => {
           </div>
         </div>
       )}
-
-      {/* Previous Reports */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          <Calendar size={24} />
-          Previous Reports
-        </h2>
-        
-        {reports.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No reports generated yet</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4">Type</th>
-                  <th className="text-left py-3 px-4">Date Range</th>
-                  <th className="text-left py-3 px-4">Generated</th>
-                  <th className="text-left py-3 px-4">Records</th>
-                  <th className="text-left py-3 px-4">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reports.map((report) => (
-                  <tr key={report._id} className="border-b hover:bg-gray-50">
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        {getReportIcon(report.type)}
-                        <span className="capitalize">{report.type}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      {new Date(report.startDate).toLocaleDateString()} - {new Date(report.endDate).toLocaleDateString()}
-                    </td>
-                    <td className="py-3 px-4">
-                      {new Date(report.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="py-3 px-4">{report.totalRecords}</td>
-                    <td className="py-3 px-4">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => downloadReport(report._id, 'pdf')}
-                          className="text-blue-600 hover:text-blue-800"
-                          title="Download PDF"
-                        >
-                          <Download size={16} />
-                        </button>
-                        <button
-                          onClick={() => downloadReport(report._id, 'excel')}
-                          className="text-green-600 hover:text-green-800"
-                          title="Download Excel"
-                        >
-                          <Download size={16} />
-                        </button>
-                        <button
-                          onClick={() => downloadReport(report._id, 'csv')}
-                          className="text-purple-600 hover:text-purple-800"
-                          title="Download CSV"
-                        >
-                          <Download size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
     </div>
   )
 }

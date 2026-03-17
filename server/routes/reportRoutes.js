@@ -62,11 +62,15 @@ router.post('/generate', async (req, res) => {
 })
 
 // Download report
-router.get('/:id/download', async (req, res) => {
+router.get('/download', async (req, res) => {
   try {
     const { format } = req.query
-    const reportId = req.params.id
     const { type, startDate, endDate } = req.query
+
+    // Validate input parameters
+    if (!type) {
+      return res.status(400).json({ message: 'Report type is required' })
+    }
 
     let reportData = {}
 
@@ -100,22 +104,31 @@ router.get('/:id/download', async (req, res) => {
         totalRecords: 0,
         totalAmount: 0,
         averageOrder: 0,
-        salesByProduct: {}
+        detailedData: []
       }
     }
+
+    // Validate data before export
+    if (!reportData || (reportData.detailedData && reportData.detailedData.length === 0)) {
+      return res.status(400).json({ message: 'No data available for report' })
+    }
+
+    // Generate unique filename based on timestamp
+    const timestamp = new Date().getTime()
+    const filename = `report-${timestamp}`
 
     if (format === 'csv') {
       let csvContent = ''
       
-      if (type === 'sales' && reportData.salesByProduct) {
-        csvContent = 'Product,Quantity,Revenue\n'
-        Object.entries(reportData.salesByProduct).forEach(([product, info]) => {
-          csvContent += `"${product}",${info.quantity},${info.revenue}\n`
+      if (type === 'sales' && reportData.detailedData) {
+        csvContent = 'Date,Order ID,Customer,Product,Quantity,Revenue\n'
+        reportData.detailedData.forEach(item => {
+          csvContent += `${item.date || ''},${item.orderId || ''},"${item.customer || 'N/A'}","${item.product || 'N/A'}",${item.quantity || 0},${item.revenue || 0}\n`
         })
-      } else if (type === 'orders' && reportData.orders) {
-        csvContent = 'Order ID,Date,Customer,Total,Status,Payment Method\n'
-        reportData.orders.forEach(order => {
-          csvContent += `${order.id},${order.date},${order.customer},${order.total},${order.status},${order.paymentMethod}\n`
+      } else if (type === 'orders' && reportData.detailedData) {
+        csvContent = 'Date,Order ID,Customer,Product,Quantity,Revenue\n'
+        reportData.detailedData.forEach(item => {
+          csvContent += `${item.date || ''},${item.orderId || ''},"${item.customer || 'N/A'}","${item.product || 'N/A'}",${item.quantity || 0},${item.revenue || 0}\n`
         })
       } else if (type === 'products' && reportData.products) {
         csvContent = 'Product Name,Category,Price,Stock,In Stock\n'
@@ -134,11 +147,11 @@ router.get('/:id/download', async (req, res) => {
         })
       } else {
         // Default CSV content
-        csvContent = 'Type,Date,Amount,Status\nSales,' + new Date().toLocaleDateString() + ',0,No Data'
+        csvContent = 'Date,Order ID,Customer,Product,Quantity,Revenue\nNo Data,No Data,No Data,No Data,0,0'
       }
       
       res.setHeader('Content-Type', 'text/csv')
-      res.setHeader('Content-Disposition', `attachment; filename="report-${reportId}.csv"`)
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}.csv"`)
       res.send(csvContent)
     } else if (format === 'pdf') {
       try {
@@ -147,33 +160,38 @@ router.get('/:id/download', async (req, res) => {
         const pdfBuffer = doc.output('arraybuffer')
         
         res.setHeader('Content-Type', 'application/pdf')
-        res.setHeader('Content-Disposition', `attachment; filename="report-${reportId}.pdf"`)
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}.pdf"`)
         res.send(Buffer.from(pdfBuffer))
       } catch (pdfError) {
         console.error('Error generating PDF:', pdfError)
         // Fallback to text file if PDF generation fails
-        const textContent = `${type || 'Sales'} Report\nDate Range: ${startDate || 'All Time'} - ${endDate || 'All Time'}\nGenerated: ${new Date().toLocaleString()}\n\nTotal Records: ${reportData.totalRecords || 0}\nTotal Amount: ₹${reportData.totalAmount || 0}`
+        const textContent = `${type || 'Sales'} Report\nDate Range: ${startDate || 'All Time'} - ${endDate || 'All Time'}\nGenerated: ${new Date().toLocaleString()}\n\nTotal Records: ${reportData.totalRecords || 0}\nTotal Amount: Rs. ${reportData.totalAmount || 0}`
         
         res.setHeader('Content-Type', 'text/plain')
-        res.setHeader('Content-Disposition', `attachment; filename="report-${reportId}.txt"`)
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}.txt"`)
         res.send(textContent)
       }
     } else if (format === 'excel') {
       // Generate CSV for Excel (Excel can open CSV files)
       let excelContent = ''
       
-      if (type === 'sales' && reportData.salesByProduct) {
-        excelContent = 'Product,Quantity,Revenue\n'
-        Object.entries(reportData.salesByProduct).forEach(([product, info]) => {
-          excelContent += `"${product}",${info.quantity},${info.revenue}\n`
+      if (type === 'sales' && reportData.detailedData) {
+        excelContent = 'Date,Order ID,Customer,Product,Quantity,Revenue\n'
+        reportData.detailedData.forEach(item => {
+          excelContent += `${item.date || ''},${item.orderId || ''},"${item.customer || 'N/A'}","${item.product || 'N/A'}",${item.quantity || 0},${item.revenue || 0}\n`
+        })
+      } else if (type === 'orders' && reportData.detailedData) {
+        excelContent = 'Date,Order ID,Customer,Product,Quantity,Revenue\n'
+        reportData.detailedData.forEach(item => {
+          excelContent += `${item.date || ''},${item.orderId || ''},"${item.customer || 'N/A'}","${item.product || 'N/A'}",${item.quantity || 0},${item.revenue || 0}\n`
         })
       } else {
         // Default Excel content
-        excelContent = 'Type,Date,Amount,Status\nSales,' + new Date().toLocaleDateString() + ',0,No Data'
+        excelContent = 'Date,Order ID,Customer,Product,Quantity,Revenue\nNo Data,No Data,No Data,No Data,0,0'
       }
       
       res.setHeader('Content-Type', 'text/csv')
-      res.setHeader('Content-Disposition', `attachment; filename="report-${reportId}.csv"`)
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}.csv"`)
       res.send(excelContent)
     } else {
       res.status(400).json({ message: 'Invalid format' })

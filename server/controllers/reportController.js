@@ -103,17 +103,19 @@ export const generateSalesReport = async (startDate, endDate) => {
 
     const orders = await Order.find({
       createdAt: { $gte: start, $lte: end },
-      status: 'delivered'
-    }).populate('items.product')
+      orderStatus: 'delivered'
+    }).populate('orderItems.product user')
 
-    const totalSales = orders.reduce((sum, order) => sum + order.totalAmount, 0)
+    const totalSales = orders.reduce((sum, order) => sum + order.totalPrice, 0)
     const totalOrders = orders.length
     const averageOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0
 
     // Sales by product
     const salesByProduct = {}
+    const detailedSalesData = []
+
     orders.forEach(order => {
-      order.items.forEach(item => {
+      order.orderItems.forEach(item => {
         if (item.product) {
           const productName = item.product.name
           if (!salesByProduct[productName]) {
@@ -121,6 +123,16 @@ export const generateSalesReport = async (startDate, endDate) => {
           }
           salesByProduct[productName].quantity += item.quantity
           salesByProduct[productName].revenue += item.price * item.quantity
+
+          // Add detailed data for export
+          detailedSalesData.push({
+            date: order.createdAt.toLocaleDateString(),
+            orderId: order._id.toString().slice(-8),
+            customer: order.user?.name || order.user?.email || 'Guest',
+            product: item.name,
+            quantity: item.quantity,
+            revenue: item.price * item.quantity
+          })
         }
       })
     })
@@ -129,7 +141,8 @@ export const generateSalesReport = async (startDate, endDate) => {
       totalRecords: totalOrders,
       totalAmount: totalSales,
       averageOrder: averageOrderValue,
-      salesByProduct
+      salesByProduct,
+      detailedData: detailedSalesData
     }
   } catch (error) {
     throw new Error('Error generating sales report: ' + error.message)
@@ -144,37 +157,43 @@ export const generateOrdersReport = async (startDate, endDate) => {
 
     const orders = await Order.find({
       createdAt: { $gte: start, $lte: end }
-    }).populate('user items.product')
+    }).populate('user orderItems.product')
 
     const ordersByStatus = {}
     const ordersByPaymentMethod = {}
+    const detailedOrdersData = []
 
     orders.forEach(order => {
       // Group by status
-      if (!ordersByStatus[order.status]) {
-        ordersByStatus[order.status] = 0
+      if (!ordersByStatus[order.orderStatus]) {
+        ordersByStatus[order.orderStatus] = 0
       }
-      ordersByStatus[order.status]++
+      ordersByStatus[order.orderStatus]++
 
       // Group by payment method
       if (!ordersByPaymentMethod[order.paymentMethod]) {
         ordersByPaymentMethod[order.paymentMethod] = 0
       }
       ordersByPaymentMethod[order.paymentMethod]++
+
+      // Add detailed data for export
+      order.orderItems.forEach(item => {
+        detailedOrdersData.push({
+          date: order.createdAt.toLocaleDateString(),
+          orderId: order._id.toString().slice(-8),
+          customer: order.user?.name || order.user?.email || 'Guest',
+          product: item.name,
+          quantity: item.quantity,
+          revenue: item.price * item.quantity
+        })
+      })
     })
 
     return {
       totalRecords: orders.length,
       ordersByStatus,
       ordersByPaymentMethod,
-      orders: orders.map(order => ({
-        id: order._id,
-        date: order.createdAt,
-        customer: order.user?.name || 'Guest',
-        total: order.totalAmount,
-        status: order.status,
-        paymentMethod: order.paymentMethod
-      }))
+      detailedData: detailedOrdersData
     }
   } catch (error) {
     throw new Error('Error generating orders report: ' + error.message)

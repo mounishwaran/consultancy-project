@@ -20,6 +20,8 @@ import Checkout from './pages/Checkout'
 import Wishlist from './pages/Wishlist'
 import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
+import AdminOrders from './pages/AdminOrders'
+import AdminUsers from './pages/AdminUsers'
 import Reports from './pages/Reports'
 import AdminRoute from './components/AdminRoute'
 
@@ -49,6 +51,8 @@ function App() {
                   <Route path="/wishlist" element={<Wishlist />} />
                   <Route path="/admin/login" element={<AdminLogin />} />
                   <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+                  <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
+                  <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
                   <Route path="/admin/reports" element={<AdminRoute><Reports /></AdminRoute>} />
                 </Routes>
               </main>

@@ -31,14 +31,14 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/bills', express.static(path.join(__dirname, 'bills')));
 
 // MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/clothing-store';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/clothing-store';
 
-mongoose.connect(MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+mongoose.connect(MONGODB_URI)
 .then(() => console.log('MongoDB Connected Successfully'))
-.catch((err) => console.error('MongoDB Connection Error:', err));
+.catch((err) => {
+  console.error('MongoDB Connection Error:', err);
+  console.log('Make sure MongoDB is running locally or update MONGODB_URI in .env file');
+});
 
 // Routes
 app.use('/api/products', productRoutes);

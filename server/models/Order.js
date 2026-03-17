@@ -81,12 +81,37 @@ const orderSchema = new mongoose.Schema({
   trackingNumber: {
     type: String,
   },
+  trackingId: {
+    type: String,
+  },
+  courier: {
+    type: String,
+  },
+  statusHistory: [{
+    status: {
+      type: String,
+      enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now,
+    },
+    note: String,
+  }],
   billGenerated: {
     type: Boolean,
     default: false,
   },
   billGeneratedAt: Date,
   billUrl: {
+    type: String,
+  },
+  invoiceGenerated: {
+    type: Boolean,
+    default: false,
+  },
+  invoiceGeneratedAt: Date,
+  invoiceUrl: {
     type: String,
   },
 }, {
