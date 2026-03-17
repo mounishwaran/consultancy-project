@@ -26,7 +26,7 @@ export const CartProvider = ({ children }) => {
   const fetchCart = async () => {
     try {
       setLoading(true)
-      const res = await axios.get('/api/cart')
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/cart`)
       setCart(res.data)
     } catch (error) {
       console.error('Error fetching cart:', error)
@@ -37,7 +37,7 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = async (productId, quantity = 1, size = null, color = null) => {
     try {
-      const res = await axios.post('/api/cart/add', {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/cart/add`, {
         productId,
         quantity,
         size,
@@ -81,7 +81,7 @@ export const CartProvider = ({ children }) => {
 
   const clearCart = async () => {
     try {
-      await axios.delete('/api/cart')
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/cart`)
       setCart({ items: [], totalPrice: 0 })
       return { success: true }
     } catch (error) {

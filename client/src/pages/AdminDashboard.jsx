@@ -26,7 +26,7 @@ const AdminDashboard = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get('/api/products?limit=100')
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/products?limit=100`)
       setProducts(res.data.products || [])
     } catch (error) {
       console.error('Error fetching products:', error)
@@ -37,10 +37,12 @@ const AdminDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const res = await axios.get('/api/admin/dashboard')
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/dashboard`)
       setStats(res.data.stats)
     } catch (error) {
       console.error('Error fetching stats:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -48,7 +50,7 @@ const AdminDashboard = () => {
     if (!window.confirm('Are you sure you want to delete this product?')) return
 
     try {
-      await axios.delete(`/api/products/${id}`)
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/products/${id}`)
       fetchProducts()
       fetchStats()
     } catch (error) {
@@ -501,11 +503,11 @@ const ProductForm = ({ product, onClose, onSuccess }) => {
 
       let res
       if (product) {
-        res = await axios.put(`/api/products/${product._id}`, formDataToSend, {
+        res = await axios.put(`${import.meta.env.VITE_API_URL}/api/products/${product._id}`, formDataToSend, {
           headers: { 'Content-Type': 'multipart/form-data' },
         })
       } else {
-        res = await axios.post('/api/products', formDataToSend, {
+        res = await axios.post(`${import.meta.env.VITE_API_URL}/api/products`, formDataToSend, {
           headers: { 'Content-Type': 'multipart/form-data' },
         })
       }

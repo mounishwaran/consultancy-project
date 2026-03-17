@@ -181,7 +181,7 @@ const Checkout = () => {
       const shippingPrice = cart.totalPrice >= 10000 ? 0 : 100
       const finalTotal = cart.totalPrice + shippingPrice
 
-      const res = await axios.post('/api/orders', {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/orders`, {
         shippingAddress,
         paymentMethod: formData.paymentMethod,
       })

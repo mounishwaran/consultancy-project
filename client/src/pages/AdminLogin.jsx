@@ -31,7 +31,7 @@ const AdminLogin = () => {
       // Wait a moment for the user state to be set
       setTimeout(async () => {
         try {
-          const userRes = await axios.get('/api/auth/me')
+          const userRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/me`)
           console.log('User data:', userRes.data)
           if (userRes.data.role === 'admin') {
             console.log('Admin role confirmed, redirecting to dashboard...')

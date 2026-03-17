@@ -77,9 +77,9 @@ const Home = () => {
   const fetchProducts = async () => {
     try {
       const [newArrivalsRes, backInStockRes, featuredRes] = await Promise.all([
-        axios.get('/api/products?newArrival=true&limit=6'),
-        axios.get('/api/products?backInStock=true&limit=6'),
-        axios.get('/api/products?featured=true&limit=6'),
+        axios.get(`${import.meta.env.VITE_API_URL}/api/products?newArrival=true&limit=6`),
+        axios.get(`${import.meta.env.VITE_API_URL}/api/products?backInStock=true&limit=6`),
+        axios.get(`${import.meta.env.VITE_API_URL}/api/products?featured=true&limit=6`),
       ])
 
       setNewArrivals(newArrivalsRes.data.products || [])
@@ -101,7 +101,7 @@ const Home = () => {
     try {
       const responses = await Promise.all(
         showcaseCategories.map((cfg) =>
-          axios.get('/api/products', {
+          axios.get(`${import.meta.env.VITE_API_URL}/api/products`, {
             params: { category: cfg.apiCategory, limit: 6 },
           })
         )
