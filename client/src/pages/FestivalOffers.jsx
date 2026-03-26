@@ -80,7 +80,7 @@ const FestivalOffers = () => {
       console.error('Error fetching festival offers:', error)
       // Fallback: fetch all products and filter client-side
       try {
-        const res = await axios.get('/api/products')
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/products`)
         const productsWithOffers = (res.data.products || []).filter(
           product => product.originalPrice && product.originalPrice > product.price
         )

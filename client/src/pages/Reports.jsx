@@ -37,11 +37,23 @@ const Reports = () => {
   const generateReport = async () => {
     try {
       setLoading(true)
-      const res = await axios.post('/api/reports/generate', {
-        type: reportType,
-        startDate: dateRange.startDate,
-        endDate: dateRange.endDate
-      })
+      const token = localStorage.getItem('token')
+      
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/reports/generate`,
+        {
+          type: reportType,
+          startDate: dateRange.startDate,
+          endDate: dateRange.endDate,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+      
+      console.log('Report generated:', res.data)
       setGeneratedReport(res.data)
     } catch (error) {
       console.error('Error generating report:', error)
@@ -53,10 +65,10 @@ const Reports = () => {
 
   const downloadReport = async (format) => {
     try {
-      const token = localStorage.getItem('token') // or from AuthContext
+      const token = localStorage.getItem('token')
 
       const res = await axios.get(
-        `/api/reports/download?format=${format}&type=${reportType}&startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`,
+        `${import.meta.env.VITE_API_URL}/api/reports/download?format=${format}&type=${reportType}&startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`,
         {
           responseType: 'blob',
           headers: {

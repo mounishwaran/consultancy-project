@@ -26,8 +26,9 @@ const ProductDetail = () => {
 
   const fetchProduct = async () => {
     try {
-      const res = await axios.get(`/api/products/${id}`)
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/products/${id}`)
       setProduct(res.data)
+      console.log('Product data:', res.data) // Debug log
       if (res.data.sizes && res.data.sizes.length > 0) {
         setSelectedSize(res.data.sizes[0])
       }
@@ -219,18 +220,18 @@ const ProductDetail = () => {
           {/* Add to Cart */}
           <button
             onClick={handleAddToCart}
-            disabled={!product || product.stock <= 0}
+            disabled={!product || product.stock <= 0 || !product.inStock}
             className="w-full btn-primary flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed py-3 text-lg"
           >
             <ShoppingCart size={20} />
             {!product
               ? 'Loading...'
-              : product.stock > 0
+              : product.stock > 0 && product.inStock
                 ? 'Add to Cart'
                 : 'Out of Stock'}
           </button>
 
-          {!product.inStock && (
+          {(!product.inStock || product.stock <= 0) && (
             <p className="mt-4 text-red-500 text-center">This product is currently out of stock</p>
           )}
         </div>

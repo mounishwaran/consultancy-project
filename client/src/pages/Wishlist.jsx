@@ -17,7 +17,7 @@ const Wishlist = () => {
       }
       try {
         setLoading(true)
-        const res = await axios.get('/api/products', {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/products`, {
           params: { ids: wishlistIds.join(',') },
         })
         setProducts(res.data.products || [])
