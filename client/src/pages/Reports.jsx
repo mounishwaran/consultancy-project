@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
-import { 
-  FileText, 
-  Download, 
-  Calendar, 
-  TrendingUp, 
-  Users, 
+import {
+  FileText,
+  Download,
+  Calendar,
+  TrendingUp,
+  Users,
   ShoppingCart,
   DollarSign,
   Package,
@@ -53,14 +53,22 @@ const Reports = () => {
 
   const downloadReport = async (format) => {
     try {
-      const res = await axios.get(`/api/reports/download?format=${format}&type=${reportType}&startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`, {
-        responseType: 'blob'
-      })
-      
+      const token = localStorage.getItem('token') // or from AuthContext
+
+      const res = await axios.get(
+        `/api/reports/download?format=${format}&type=${reportType}&startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`,
+        {
+          responseType: 'blob',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
       const url = window.URL.createObjectURL(new Blob([res.data]))
       const link = document.createElement('a')
       link.href = url
-      link.setAttribute('download', `report-${Date.now()}.${format}`)
+      link.setAttribute('download', `report-${Date.now()}.${format === 'excel' ? 'csv' : format}`)
       document.body.appendChild(link)
       link.click()
       link.remove()
@@ -110,7 +118,7 @@ const Reports = () => {
           <FileText size={24} />
           Generate New Report
         </h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium mb-2">Report Type</label>
@@ -126,28 +134,28 @@ const Reports = () => {
               <option value="inventory">Inventory Report</option>
             </select>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium mb-2">Start Date</label>
             <input
               type="date"
               value={dateRange.startDate}
-              onChange={(e) => setDateRange({...dateRange, startDate: e.target.value})}
+              onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium mb-2">End Date</label>
             <input
               type="date"
               value={dateRange.endDate}
-              onChange={(e) => setDateRange({...dateRange, endDate: e.target.value})}
+              onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
             />
           </div>
         </div>
-        
+
         <button
           onClick={generateReport}
           disabled={loading}
@@ -180,7 +188,7 @@ const Reports = () => {
               <p className="text-2xl font-bold">{new Date().toLocaleDateString()}</p>
             </div>
           </div>
-          
+
           <div className="flex gap-2">
             <button
               onClick={() => downloadReport('pdf')}

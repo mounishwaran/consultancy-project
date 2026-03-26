@@ -97,9 +97,8 @@ const ProductDetail = () => {
                 <button
                   key={idx}
                   onClick={() => setSelectedImage(idx)}
-                  className={`border-2 rounded-lg overflow-hidden ${
-                    selectedImage === idx ? 'border-black' : 'border-gray-300'
-                  }`}
+                  className={`border-2 rounded-lg overflow-hidden ${selectedImage === idx ? 'border-black' : 'border-gray-300'
+                    }`}
                 >
                   <img
                     src={getImageUrl(img)}
@@ -128,7 +127,7 @@ const ProductDetail = () => {
               />
             </button>
           </div>
-          
+
           <div className="flex items-center gap-4 mb-4">
             <span className="text-3xl font-bold">₹{product.price}</span>
             {product.originalPrice && (
@@ -158,11 +157,10 @@ const ProductDetail = () => {
                   <button
                     key={size}
                     onClick={() => setSelectedSize(size)}
-                    className={`px-4 py-2 border rounded-md ${
-                      selectedSize === size
+                    className={`px-4 py-2 border rounded-md ${selectedSize === size
                         ? 'border-black bg-black text-white'
                         : 'border-gray-300 hover:border-black'
-                    }`}
+                      }`}
                   >
                     {size}
                   </button>
@@ -186,11 +184,10 @@ const ProductDetail = () => {
                         setSelectedImage(idx)
                       }
                     }}
-                    className={`px-4 py-2 border rounded-md ${
-                      selectedColor === color
+                    className={`px-4 py-2 border rounded-md ${selectedColor === color
                         ? 'border-black bg-black text-white'
                         : 'border-gray-300 hover:border-black'
-                    }`}
+                      }`}
                   >
                     {color}
                   </button>
@@ -222,11 +219,15 @@ const ProductDetail = () => {
           {/* Add to Cart */}
           <button
             onClick={handleAddToCart}
-            disabled={!product.inStock}
+            disabled={!product || product.stock <= 0}
             className="w-full btn-primary flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed py-3 text-lg"
           >
             <ShoppingCart size={20} />
-            {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+            {!product
+              ? 'Loading...'
+              : product.stock > 0
+                ? 'Add to Cart'
+                : 'Out of Stock'}
           </button>
 
           {!product.inStock && (
